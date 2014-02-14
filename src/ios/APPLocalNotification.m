@@ -268,7 +268,7 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
 		}
 		else
 		{
-			notification.soundName = notification.soundName = [NSString stringWithFormat:@"%@", sound];
+			notification.soundName = [NSString stringWithFormat:@"%@", sound];
 			
 		}
 	}
