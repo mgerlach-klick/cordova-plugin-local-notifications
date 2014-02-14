@@ -1,22 +1,22 @@
 /*
-    Copyright 2013-2014 appPlant UG
+	Copyright 2013-2014 appPlant UG
 
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
+	Licensed to the Apache Software Foundation (ASF) under one
+	or more contributor license agreements.  See the NOTICE file
+	distributed with this work for additional information
+	regarding copyright ownership.	The ASF licenses this file
+	to you under the Apache License, Version 2.0 (the
+	"License"); you may not use this file except in compliance
+	with the License.  You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+	 http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
+	Unless required by applicable law or agreed to in writing,
+	software distributed under the License is distributed on an
+	"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+	KIND, either express or implied.  See the License for the
+	specific language governing permissions and limitations
+	under the License.
 */
 
 package de.appplant.cordova.plugin.localnotification;
@@ -38,211 +38,212 @@ import android.net.Uri;
  */
 public class Options {
 
-    private JSONObject options = new JSONObject();
-    private String packageName = null;
-    private long interval      = 0;
+	private JSONObject options = new JSONObject();
+	private String packageName = null;
+	private long interval	   = 0;
+    private Context ctx;
 
     Options (Activity activity) {
         packageName = activity.getPackageName();
+        ctx = activity.getApplicationContext();
     }
 
     Options (Context context) {
         packageName = context.getPackageName();
+        ctx = context;
     }
 
-    /**
-     * Parst die übergebenen Eigenschaften.
-     */
-    public Options parse (JSONObject options) {
-        String repeat = options.optString("repeat");
+	/**
+	 * Parst die übergebenen Eigenschaften.
+	 */
+	public Options parse (JSONObject options) {
+		String repeat = options.optString("repeat");
 
-        this.options = options;
+		this.options = options;
 
-        if (repeat.equalsIgnoreCase("hourly")) {
-            interval = AlarmManager.INTERVAL_HOUR;
-        } if (repeat.equalsIgnoreCase("daily")) {
-            interval = AlarmManager.INTERVAL_DAY;
-        } else if (repeat.equalsIgnoreCase("weekly")) {
-            interval = AlarmManager.INTERVAL_DAY*7;
-        } else if (repeat.equalsIgnoreCase("monthly")) {
-            interval = AlarmManager.INTERVAL_DAY*31; // 31 days
-        } else if (repeat.equalsIgnoreCase("yearly")) {
-            interval = AlarmManager.INTERVAL_DAY*365;
-        } else {
-            try {
-                interval = Integer.parseInt(repeat) * 60000;
-            } catch (Exception e) {};
-        }
+		if (repeat.equalsIgnoreCase("hourly")) {
+			interval = AlarmManager.INTERVAL_HOUR;
+		} if (repeat.equalsIgnoreCase("daily")) {
+			interval = AlarmManager.INTERVAL_DAY;
+		} else if (repeat.equalsIgnoreCase("weekly")) {
+			interval = AlarmManager.INTERVAL_DAY*7;
+		} else if (repeat.equalsIgnoreCase("monthly")) {
+			interval = AlarmManager.INTERVAL_DAY*31; // 31 days
+		} else if (repeat.equalsIgnoreCase("yearly")) {
+			interval = AlarmManager.INTERVAL_DAY*365;
+		} else {
+			try {
+				interval = Integer.parseInt(repeat) * 60000;
+			} catch (Exception e) {};
+		}
 
-        return this;
-    }
+		return this;
+	}
 
-    /**
-     * Setzt die neue Zeit an Hand des Intervalls.
-     */
-    public Options moveDate () {
-        try {
-            options.put("date", (getDate() + interval) / 1000);
-        } catch (JSONException e) {}
+	/**
+	 * Setzt die neue Zeit an Hand des Intervalls.
+	 */
+	public Options moveDate () {
+		try {
+			options.put("date", (getDate() + interval) / 1000);
+		} catch (JSONException e) {}
 
-        return this;
-    }
+		return this;
+	}
 
-    /**
-     * Gibt die Eigenschaften als JSONObjekt an.
-     */
-    public JSONObject getJSONObject() {
-        return options;
-    }
+	/**
+	 * Gibt die Eigenschaften als JSONObjekt an.
+	 */
+	public JSONObject getJSONObject() {
+		return options;
+	}
 
-    /**
-     * Gibt die Zeit in Millisekunden an, wann die Notification aufpoppen soll.
-     */
-    public long getDate() {
-        return options.optLong("date", 0) * 1000;
-    }
+	/**
+	 * Gibt die Zeit in Millisekunden an, wann die Notification aufpoppen soll.
+	 */
+	public long getDate() {
+		return options.optLong("date", 0) * 1000;
+	}
 
-    /**
-     * Gibt die Zeit als Kalender an.
-     */
-    public Calendar getCalendar () {
-        Calendar calendar = Calendar.getInstance();
+	/**
+	 * Gibt die Zeit als Kalender an.
+	 */
+	public Calendar getCalendar () {
+		Calendar calendar = Calendar.getInstance();
 
-        calendar.setTime(new Date(getDate()));
+		calendar.setTime(new Date(getDate()));
 
-        return calendar;
-    }
+		return calendar;
+	}
 
-    /**
-     * Gibt die Nachricht der Notification an.
-     */
-    public String getMessage () {
-        return options.optString("message", "");
-    }
+	/**
+	 * Gibt die Nachricht der Notification an.
+	 */
+	public String getMessage () {
+		return options.optString("message", "");
+	}
 
-    /**
-     * Gibt den Titel der Notification an.
-     */
-    public String getTitle () {
-        return options.optString("title", "");
-    }
+	/**
+	 * Gibt den Titel der Notification an.
+	 */
+	public String getTitle () {
+		return options.optString("title", "");
+	}
 
-    /**
-     * Gibt den Pfad zum Sound der Notification an.
-     */
-    public Uri getSound () {
-        String sound = options.optString("sound", null);
+	/**
+	 * Gibt den Pfad zum Sound der Notification an.
+	 */
+	public Uri getSound () {
+		String sound = options.optString("sound", null);
 
-        if (sound != null) {
-            try {
-                int soundId = (Integer) RingtoneManager.class.getDeclaredField(sound).get(Integer.class);
+		if (sound != null) {
+			try {
+				Uri soundString = Uri.parse("android.resource://" + packageName + "/"+ ctx.getResources().getIdentifier(sound, "raw", packageName));
+				return soundString;
+			} catch (Exception e) {
+				return Uri.parse(sound);
+			}
+		}
 
-                return RingtoneManager.getDefaultUri(soundId);
-            } catch (Exception e) {
-                return Uri.parse(sound);
-            }
-        }
+		return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+	}
+	/**
+	 * Gibt den ID Code des Bildes an.
+	 */
+	public int getIcon () {
+		int icon		= 0;
+		String iconName = options.optString("icon", "icon");
 
-        return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-    }
+		icon = getIconValue(packageName, iconName);
 
-    /**
-     * Gibt den ID Code des Bildes an.
-     */
-    public int getIcon () {
-        int icon        = 0;
-        String iconName = options.optString("icon", "icon");
+		if (icon == 0) {
+			icon = getIconValue("android", iconName);
+		}
 
-        icon = getIconValue(packageName, iconName);
+		if (icon == 0) {
+			icon = android.R.drawable.ic_menu_info_details;
+		}
 
-        if (icon == 0) {
-            icon = getIconValue("android", iconName);
-        }
+		return options.optInt("icon", icon);
+	}
 
-        if (icon == 0) {
-            icon = android.R.drawable.ic_menu_info_details;
-        }
+	/**
+	 * Gibt den ID Code des kleinen Bildes an.
+	 */
+	public int getSmallIcon () {
+		int resId		= 0;
+		String iconName = options.optString("smallIcon", "");
 
-        return options.optInt("icon", icon);
-    }
+		resId = getIconValue(packageName, iconName);
 
-    /**
-     * Gibt den ID Code des kleinen Bildes an.
-     */
-    public int getSmallIcon () {
-        int resId       = 0;
-        String iconName = options.optString("smallIcon", "");
+		if (resId == 0) {
+			resId = getIconValue("android", iconName);
+		}
 
-        resId = getIconValue(packageName, iconName);
+		if (resId == 0) {
+			resId = getIcon();
+		}
 
-        if (resId == 0) {
-            resId = getIconValue("android", iconName);
-        }
+		return options.optInt("smallIcon", resId);
+	}
 
-        if (resId == 0) {
-            resId = getIcon();
-        }
+	/**
+	 * Gibt das Intervall an, in dem die Notification aufpoppen soll (daily, weekly, monthly, yearly)
+	 */
+	public long getInterval () {
+		return interval;
+	}
 
-        return options.optInt("smallIcon", resId);
-    }
+	/**
+	 * Gibt die Badge-Nummer der Notification an.
+	 */
+	public int getBadge () {
+		return options.optInt("badge", 0);
+	}
 
-    /**
-     * Gibt das Intervall an, in dem die Notification aufpoppen soll (daily, weekly, monthly, yearly)
-     */
-    public long getInterval () {
-        return interval;
-    }
+	/**
+	 * Gibt die Callback-ID des PluginResults an.
+	 */
+	public String getId () {
+		return options.optString("id", "0");
+	}
 
-    /**
-     * Gibt die Badge-Nummer der Notification an.
-     */
-    public int getBadge () {
-        return options.optInt("badge", 0);
-    }
+	/**
+	 * Gibt an, ob die Notification automatisch geschlossen werden soll, wenn der Benutzer darauf klickt.
+	 */
+	public Boolean getAutoCancel () {
+		return options.optBoolean("autoCancel", false);
+	}
 
-    /**
-     * Gibt die Callback-ID des PluginResults an.
-     */
-    public String getId () {
-        return options.optString("id", "0");
-    }
+	/**
+	 *
+	 */
+	public Boolean getOngoing () {
+		return options.optBoolean("ongoing", false);
+	}
 
-    /**
-     * Gibt an, ob die Notification automatisch geschlossen werden soll, wenn der Benutzer darauf klickt.
-     */
-    public Boolean getAutoCancel () {
-        return options.optBoolean("autoCancel", false);
-    }
+	/**
+	 * Gibt die zusätzlichen Daten als String an.
+	 */
+	public String getJSON () {
+		return options.optString("json", "");
+	}
 
-    /**
-     *
-     */
-    public Boolean getOngoing () {
-        return options.optBoolean("ongoing", false);
-    }
+	/**
+	 * Gibt den Zahlwert des Icons an.
+	 *
+	 * @param {String} className
+	 * @param {String} iconName
+	 */
+	private int getIconValue (String className, String iconName) {
+		int icon = 0;
 
-    /**
-     * Gibt die zusätzlichen Daten als String an.
-     */
-    public String getJSON () {
-        return options.optString("json", "");
-    }
+		try {
+			Class<?> klass	= Class.forName(className + ".R$drawable");
 
-    /**
-     * Gibt den Zahlwert des Icons an.
-     *
-     * @param {String} className
-     * @param {String} iconName
-     */
-    private int getIconValue (String className, String iconName) {
-        int icon = 0;
+			icon = (Integer) klass.getDeclaredField(iconName).get(Integer.class);
+		} catch (Exception e) {}
 
-        try {
-            Class<?> klass  = Class.forName(className + ".R$drawable");
-
-            icon = (Integer) klass.getDeclaredField(iconName).get(Integer.class);
-        } catch (Exception e) {}
-
-        return icon;
-    }
+		return icon;
+	}
 }
