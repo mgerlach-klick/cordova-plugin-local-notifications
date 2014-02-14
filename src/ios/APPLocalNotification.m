@@ -7,7 +7,7 @@
  regarding copyright ownership.  The ASF licenses this file
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
- with the License.  You may obtain a copy of the License at
+ with the License.	You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
 
@@ -54,20 +54,20 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) add:(CDVInvokedUrlCommand*)command
 {
-    [self.commandDelegate runInBackground:^{
-        NSArray* arguments                = [command arguments];
-        NSMutableDictionary* options      = [arguments objectAtIndex:0];
-        UILocalNotification* notification = [self notificationWithProperties:options];
-        NSString* id                      = [notification.userInfo objectForKey:@"id"];
-        NSString* json                    = [notification.userInfo objectForKey:@"json"];
+	[self.commandDelegate runInBackground:^{
+		NSArray* arguments				  = [command arguments];
+		NSMutableDictionary* options	  = [arguments objectAtIndex:0];
+		UILocalNotification* notification = [self notificationWithProperties:options];
+		NSString* id					  = [notification.userInfo objectForKey:@"id"];
+		NSString* json					  = [notification.userInfo objectForKey:@"json"];
 
-        [self cancelNotificationWithId:id fireEvent:NO];
-        [self archiveNotification:notification];
+		[self cancelNotificationWithId:id fireEvent:NO];
+		[self archiveNotification:notification];
 
-        [self fireEvent:@"add" id:id json:json];
+		[self fireEvent:@"add" id:id json:json];
 
-        [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-    }];
+		[[UIApplication sharedApplication] scheduleLocalNotification:notification];
+	}];
 }
 
 /**
@@ -77,12 +77,12 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) cancel:(CDVInvokedUrlCommand*)command
 {
-    [self.commandDelegate runInBackground:^{
-        NSArray* arguments = [command arguments];
-        NSString* id       = [arguments objectAtIndex:0];
+	[self.commandDelegate runInBackground:^{
+		NSArray* arguments = [command arguments];
+		NSString* id	   = [arguments objectAtIndex:0];
 
-        [self cancelNotificationWithId:id fireEvent:YES];
-    }];
+		[self cancelNotificationWithId:id fireEvent:YES];
+	}];
 }
 
 /**
@@ -90,22 +90,22 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) cancelAll:(CDVInvokedUrlCommand*)command
 {
-    [self.commandDelegate runInBackground:^{
-        NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+	[self.commandDelegate runInBackground:^{
+		NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
 
-        for (NSString* key in [entries allKeys])
-        {
-            if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
-            {
-                [self cancelNotificationWithId:key fireEvent:YES];
-            }
-        }
+		for (NSString* key in [entries allKeys])
+		{
+			if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
+			{
+				[self cancelNotificationWithId:key fireEvent:YES];
+			}
+		}
 
-        [[NSUserDefaults standardUserDefaults] synchronize];
+		[[NSUserDefaults standardUserDefaults] synchronize];
 
-        [[UIApplication sharedApplication] cancelAllLocalNotifications];
-        [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
-    }];
+		[[UIApplication sharedApplication] cancelAllLocalNotifications];
+		[[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+	}];
 }
 
 /**
@@ -115,29 +115,29 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) cancelNotificationWithId:(NSString*)id fireEvent:(BOOL)fireEvent
 {
-    if (![self strIsNullOrEmpty:id])
-    {
-        NSString* key = ([id hasPrefix:kAPP_LOCALNOTIFICATION])
-        ? id
-        : [kAPP_LOCALNOTIFICATION stringByAppendingString:id];
+	if (![self strIsNullOrEmpty:id])
+	{
+		NSString* key = ([id hasPrefix:kAPP_LOCALNOTIFICATION])
+		? id
+		: [kAPP_LOCALNOTIFICATION stringByAppendingString:id];
 
-        NSData* data  = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+		NSData* data  = [[NSUserDefaults standardUserDefaults] objectForKey:key];
 
-        if (data)
-        {
-            UILocalNotification* notification = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+		if (data)
+		{
+			UILocalNotification* notification = [NSKeyedUnarchiver unarchiveObjectWithData:data];
 
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
-            [[UIApplication sharedApplication] cancelLocalNotification:notification];
+			[[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+			[[UIApplication sharedApplication] cancelLocalNotification:notification];
 
-            if (fireEvent)
-            {
-                NSString* json = [notification.userInfo objectForKey:@"json"];
+			if (fireEvent)
+			{
+				NSString* json = [notification.userInfo objectForKey:@"json"];
 
-                [self fireEvent:@"cancel" id:id json:json];
-            }
-        }
-    }
+				[self fireEvent:@"cancel" id:id json:json];
+			}
+		}
+	}
 }
 
 /**
@@ -147,28 +147,28 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) cancelAllNotificationsWhichAreOlderThen:(float)seconds
 {
-    NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
-    NSDate* now           = [NSDate date];
+	NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+	NSDate* now			  = [NSDate date];
 
-    for (NSString* key in [entries allKeys])
-    {
-        if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
-        {
-            NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+	for (NSString* key in [entries allKeys])
+	{
+		if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
+		{
+			NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:key];
 
-            if (data)
-            {
-                UILocalNotification* notification = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+			if (data)
+			{
+				UILocalNotification* notification = [NSKeyedUnarchiver unarchiveObjectWithData:data];
 
-                NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
-                NSString* id                      = [notification.userInfo objectForKey:@"id"];
+				NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
+				NSString* id					  = [notification.userInfo objectForKey:@"id"];
 
-                if (notification.repeatInterval == NSEraCalendarUnit && fireDateDistance > seconds) {
-                    [self cancelNotificationWithId:id fireEvent:YES];
-                }
-            }
-        }
-    }
+				if (notification.repeatInterval == NSEraCalendarUnit && fireDateDistance > seconds) {
+					[self cancelNotificationWithId:id fireEvent:YES];
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -178,15 +178,15 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) archiveNotification:(UILocalNotification*)notification
 {
-    NSString* id = [notification.userInfo objectForKey:@"id"];
+	NSString* id = [notification.userInfo objectForKey:@"id"];
 
-    if (![self strIsNullOrEmpty:id])
-    {
-        NSData* data  = [NSKeyedArchiver archivedDataWithRootObject:notification];
-        NSString* key = [kAPP_LOCALNOTIFICATION stringByAppendingString:id];
+	if (![self strIsNullOrEmpty:id])
+	{
+		NSData* data  = [NSKeyedArchiver archivedDataWithRootObject:notification];
+		NSString* key = [kAPP_LOCALNOTIFICATION stringByAppendingString:id];
 
-        [[NSUserDefaults standardUserDefaults] setObject:data forKey:key];
-    }
+		[[NSUserDefaults standardUserDefaults] setObject:data forKey:key];
+	}
 }
 
 /**
@@ -194,25 +194,25 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (NSMutableDictionary*) repeatDict
 {
-    NSMutableDictionary* repeatDict = [[NSMutableDictionary alloc] init];
+	NSMutableDictionary* repeatDict = [[NSMutableDictionary alloc] init];
 
 #ifdef NSCalendarUnitHour
-    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitHour]  forKey:@"hourly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitDay]   forKey:@"daily"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitMonth] forKey:@"monthly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitYear]  forKey:@"yearly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitHour]  forKey:@"hourly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitDay]   forKey:@"daily"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitMonth] forKey:@"monthly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitYear]  forKey:@"yearly"];
 #else
-    [repeatDict setObject:[NSNumber numberWithInt:NSHourCalendarUnit]  forKey:@"hourly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSDayCalendarUnit]   forKey:@"daily"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSMonthCalendarUnit] forKey:@"monthly"];
-    [repeatDict setObject:[NSNumber numberWithInt:NSYearCalendarUnit]  forKey:@"yearly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSHourCalendarUnit]  forKey:@"hourly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSDayCalendarUnit]   forKey:@"daily"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSMonthCalendarUnit] forKey:@"monthly"];
+	[repeatDict setObject:[NSNumber numberWithInt:NSYearCalendarUnit]  forKey:@"yearly"];
 #endif
 
-    [repeatDict setObject:[NSNumber numberWithInt:NSEraCalendarUnit]   forKey:@""];
+	[repeatDict setObject:[NSNumber numberWithInt:NSEraCalendarUnit]   forKey:@""];
 
-    return repeatDict;
+	return repeatDict;
 }
 
 /**
@@ -220,12 +220,12 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (NSDictionary*) userDict:(NSMutableDictionary*)options
 {
-    NSString* id = [options objectForKey:@"id"];
-    NSString* ac = [options objectForKey:@"autoCancel"];
-    NSString* js = [options objectForKey:@"json"];
+	NSString* id = [options objectForKey:@"id"];
+	NSString* ac = [options objectForKey:@"autoCancel"];
+	NSString* js = [options objectForKey:@"json"];
 
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            id, @"id", ac, @"autoCancel", js, @"json", nil];
+	return [NSDictionary dictionaryWithObjectsAndKeys:
+			id, @"id", ac, @"autoCancel", js, @"json", nil];
 }
 
 /**
@@ -233,46 +233,47 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (UILocalNotification*) notificationWithProperties:(NSMutableDictionary*)options
 {
-    UILocalNotification* notification = [[UILocalNotification alloc] init];
+	UILocalNotification* notification = [[UILocalNotification alloc] init];
 
-    double timestamp = [[options objectForKey:@"date"] doubleValue];
-    NSString* msg    = [options objectForKey:@"message"];
-    NSString* title  = [options objectForKey:@"title"];
-    NSString* sound  = [options objectForKey:@"sound"];
-    NSString* repeat = [options objectForKey:@"repeat"];
-    NSInteger badge  = [[options objectForKey:@"badge"] intValue];
+	double timestamp = [[options objectForKey:@"date"] doubleValue];
+	NSString* msg	 = [options objectForKey:@"message"];
+	NSString* title  = [options objectForKey:@"title"];
+	NSString* sound  = [options objectForKey:@"sound"];
+	NSString* repeat = [options objectForKey:@"repeat"];
+	NSInteger badge  = [[options objectForKey:@"badge"] intValue];
 
-    notification.fireDate       = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    notification.timeZone       = [NSTimeZone defaultTimeZone];
-    notification.repeatInterval = [[[self repeatDict] objectForKey: repeat] intValue];
-    notification.userInfo       = [self userDict:options];
+	notification.fireDate		= [NSDate dateWithTimeIntervalSince1970:timestamp];
+	notification.timeZone		= [NSTimeZone defaultTimeZone];
+	notification.repeatInterval = [[[self repeatDict] objectForKey: repeat] intValue];
+	notification.userInfo		= [self userDict:options];
 
-    notification.applicationIconBadgeNumber = badge;
+	notification.applicationIconBadgeNumber = badge;
 
-    if (![self strIsNullOrEmpty:msg])
-    {
-        if (![self strIsNullOrEmpty:title])
-        {
-            notification.alertBody = [NSString stringWithFormat:@"%@\n%@", title, msg];
-        }
-        else
-        {
-            notification.alertBody = msg;
-        }
-    }
+	if (![self strIsNullOrEmpty:msg])
+	{
+		if (![self strIsNullOrEmpty:title])
+		{
+			notification.alertBody = [NSString stringWithFormat:@"%@\n%@", title, msg];
+		}
+		else
+		{
+			notification.alertBody = msg;
+		}
+	}
 
-    if (sound != (NSString*)[NSNull null])
-    {
-        if ([sound isEqualToString:@""]) {
-            notification.soundName = UILocalNotificationDefaultSoundName;
-        }
-        else
-        {
-            notification.soundName = [self.commandDelegate pathForResource:sound];
-        }
-    }
+	if (sound != (NSString*)[NSNull null])
+	{
+		if ([sound isEqualToString:@""]) {
+			notification.soundName = UILocalNotificationDefaultSoundName;
+		}
+		else
+		{
+			notification.soundName = notification.soundName = [NSString stringWithFormat:@"%@", sound];
+			
+		}
+	}
 
-    return notification;
+	return notification;
 }
 
 /**
@@ -280,24 +281,24 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) didReceiveLocalNotification:(NSNotification*)localNotification
 {
-    UIApplicationState state          = [[UIApplication sharedApplication] applicationState];
-    bool isActive                     = state == UIApplicationStateActive;
+	UIApplicationState state		  = [[UIApplication sharedApplication] applicationState];
+	bool isActive					  = state == UIApplicationStateActive;
 
-    UILocalNotification* notification = [localNotification object];
-    NSString* id                      = [notification.userInfo objectForKey:@"id"];
-    NSString* json                    = [notification.userInfo objectForKey:@"json"];
-    BOOL autoCancel                   = [[notification.userInfo objectForKey:@"autoCancel"] boolValue];
+	UILocalNotification* notification = [localNotification object];
+	NSString* id					  = [notification.userInfo objectForKey:@"id"];
+	NSString* json					  = [notification.userInfo objectForKey:@"json"];
+	BOOL autoCancel					  = [[notification.userInfo objectForKey:@"autoCancel"] boolValue];
 
-    NSDate* now                       = [NSDate date];
-    NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
-    NSString* event                   = (fireDateDistance < 0.05) ? @"trigger" : @"click";
+	NSDate* now						  = [NSDate date];
+	NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
+	NSString* event					  = (fireDateDistance < 0.05) ? @"trigger" : @"click";
 
-    [self fireEvent:event id:id json:json];
+	[self fireEvent:event id:id json:json];
 
-    if (autoCancel && !isActive)
-    {
-        [self cancelNotificationWithId:id fireEvent:YES];
-    }
+	if (autoCancel && !isActive)
+	{
+		[self cancelNotificationWithId:id fireEvent:YES];
+	}
 }
 
 /**
@@ -305,7 +306,7 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) pluginInitialize
 {
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
 }
 
 /**
@@ -313,7 +314,7 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (void) onAppTerminate
 {
-    [self cancelAllNotificationsWhichAreOlderThen:432000];
+	[self cancelAllNotificationsWhichAreOlderThen:432000];
 }
 
 /**
@@ -321,26 +322,26 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
  */
 - (BOOL) strIsNullOrEmpty:(NSString*)str
 {
-    return (str == (NSString*)[NSNull null] || [str isEqualToString:@""]) ? YES : NO;
+	return (str == (NSString*)[NSNull null] || [str isEqualToString:@""]) ? YES : NO;
 }
 
 /**
  * Fires the given event.
  *
  * @param {String} event The Name of the event
- * @param {String} id    The ID of the notification
+ * @param {String} id	 The ID of the notification
  * @param {String} json  A custom (JSON) string
  */
 - (void) fireEvent:(NSString*) event id:(NSString*) id json:(NSString*) json
 {
-    UIApplicationState state = [[UIApplication sharedApplication] applicationState];
-    bool isActive            = state == UIApplicationStateActive;
-    NSString* stateName      = isActive ? @"foreground" : @"background";
+	UIApplicationState state = [[UIApplication sharedApplication] applicationState];
+	bool isActive			 = state == UIApplicationStateActive;
+	NSString* stateName		 = isActive ? @"foreground" : @"background";
 
-    NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\'%@\\'", id, stateName, json];
-    NSString* js     = [NSString stringWithFormat:@"setTimeout('plugin.notification.local.on%@(%@)',0)", event, params];
+	NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\'%@\\'", id, stateName, json];
+	NSString* js	 = [NSString stringWithFormat:@"setTimeout('plugin.notification.local.on%@(%@)',0)", event, params];
 
-    [self.commandDelegate evalJs:js];
+	[self.commandDelegate evalJs:js];
 }
 
 @end
