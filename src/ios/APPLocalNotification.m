@@ -35,6 +35,8 @@
 - (UILocalNotification*) notificationWithProperties:(NSMutableDictionary*)options;
 // Ruft die JS-Callbacks auf, nachdem eine Notification eingegangen ist
 - (void) didReceiveLocalNotification:(NSNotification*)localNotification;
+// Ruft die JS-Callbacks auf, nachdem eine Notification eingegangen ist
+- (void) didFinishLaunchingWithOptions:(NSNotification*)notification;
 // Hilfsmethode gibt an, ob er String NULL oder Empty ist
 - (BOOL) strIsNullOrEmpty:(NSString*)str;
 // Fires the given event
@@ -197,21 +199,24 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
 	NSMutableDictionary* repeatDict = [[NSMutableDictionary alloc] init];
 
 #ifdef NSCalendarUnitHour
-	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitHour]  forKey:@"hourly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitDay]   forKey:@"daily"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitMonth] forKey:@"monthly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitYear]  forKey:@"yearly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitSecond] forKey:@"secondly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitMinute] forKey:@"minutely"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitHour]   forKey:@"hourly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitDay]    forKey:@"daily"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]   forKey:@"weekly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitMonth]  forKey:@"monthly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSCalendarUnitYear]   forKey:@"yearly"];
 #else
-	[repeatDict setObject:[NSNumber numberWithInt:NSHourCalendarUnit]  forKey:@"hourly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSDayCalendarUnit]   forKey:@"daily"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]  forKey:@"weekly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSMonthCalendarUnit] forKey:@"monthly"];
-	[repeatDict setObject:[NSNumber numberWithInt:NSYearCalendarUnit]  forKey:@"yearly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSSecondCalendarUnit] forKey:@"secondly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSMinuteCalendarUnit] forKey:@"minutely"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSHourCalendarUnit]   forKey:@"hourly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSDayCalendarUnit]    forKey:@"daily"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSWeekCalendarUnit]   forKey:@"weekly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSMonthCalendarUnit]  forKey:@"monthly"];
+    [repeatDict setObject:[NSNumber numberWithInt:NSYearCalendarUnit]   forKey:@"yearly"];
 #endif
 
 	[repeatDict setObject:[NSNumber numberWithInt:NSEraCalendarUnit]   forKey:@""];
-
 	return repeatDict;
 }
 
@@ -302,11 +307,29 @@ NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
 }
 
 /**
+ * Ruft die JS-Callbacks auf, nachdem eine Notification eingegangen ist.
+ */
+- (void) didFinishLaunchingWithOptions:(NSNotification*)notification
+{
+    NSDictionary* launchOptions            = [notification userInfo];
+    UILocalNotification *localNotification = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+
+    if (localNotification)
+    {
+        [self didReceiveLocalNotification:notification];
+    }
+}
+
+/**
  * Registriert den Observer für LocalNotification Events.
  */
 - (void) pluginInitialize
 {
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:)
+                                                 name:CDVLocalNotification object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:)
+                                                 name:UIApplicationDidFinishLaunchingNotification object:nil];
 }
 
 /**

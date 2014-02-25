@@ -41,17 +41,17 @@ public class Options {
 	private JSONObject options = new JSONObject();
 	private String packageName = null;
 	private long interval	   = 0;
-    private Context ctx;
+	private Context ctx;
 
-    Options (Activity activity) {
-        packageName = activity.getPackageName();
-        ctx = activity.getApplicationContext();
-    }
+	Options (Activity activity) {
+		packageName = activity.getPackageName();
+		ctx = activity.getApplicationContext();
+	}
 
-    Options (Context context) {
-        packageName = context.getPackageName();
-        ctx = context;
-    }
+	Options (Context context) {
+		packageName = context.getPackageName();
+		ctx = context;
+	}
 
 	/**
 	 * Parst die übergebenen Eigenschaften.
@@ -61,7 +61,11 @@ public class Options {
 
 		this.options = options;
 
-		if (repeat.equalsIgnoreCase("hourly")) {
+		 if (repeat.equalsIgnoreCase("secondly")) {
+			interval = 1000;
+		} if (repeat.equalsIgnoreCase("minutely")) {
+			interval = AlarmManager.INTERVAL_FIFTEEN_MINUTES / 15;
+		}if (repeat.equalsIgnoreCase("hourly")) {
 			interval = AlarmManager.INTERVAL_HOUR;
 		} if (repeat.equalsIgnoreCase("daily")) {
 			interval = AlarmManager.INTERVAL_DAY;
