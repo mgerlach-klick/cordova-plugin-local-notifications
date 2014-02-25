@@ -180,6 +180,14 @@ LocalNotification.prototype = {
      * @param {String} json  A custom (JSON) string
      */
     oncancel: function (id, state, json) {}
+
+	/**
+     * Notifies the plugin that the app is now ready to process messages
+     *
+     */
+    ready: function (id) {
+        cordova.exec(null, null, 'LocalNotification', 'ready', []);
+	}
 };
 
 var plugin = new LocalNotification();
