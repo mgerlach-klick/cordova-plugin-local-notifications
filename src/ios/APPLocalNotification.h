@@ -35,5 +35,7 @@ extern NSString *const kAPP_LOCALNOTIFICATION;
 - (void) cancel:(CDVInvokedUrlCommand*)command;
 // Entfernt alle registrierten Einträge
 - (void) cancelAll:(CDVInvokedUrlCommand*)command;
+// Notifies the plugin that the app is now ready to accept messages
+- (void) ready:(CDVInvokedUrlCommand*)command;
 
 @end
