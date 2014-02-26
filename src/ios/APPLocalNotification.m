@@ -160,7 +160,7 @@ NSMutableArray *jsEventQueue;
 /**
  * Entfernt alle registrierten Einträge.
  */
-- (void) _cancelAll:(CDVInvokedUrlCommand*)command
+- (void) _cancelAll
 {
 	NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
 	
