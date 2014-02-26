@@ -225,6 +225,13 @@ public class Options {
 	public Boolean getOngoing () {
 		return options.optBoolean("ongoing", false);
 	}
+	
+	/**
+	 * Returns optional milliseconds for window in which the notification can be shown
+	 */
+	public long getWindowMilliseconds () {
+		return options.optLong("windowMilliseconds", 0);
+	}
 
 	/**
 	 * Gibt die zusätzlichen Daten als String an.

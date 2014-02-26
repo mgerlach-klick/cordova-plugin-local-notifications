@@ -82,8 +82,22 @@ public class Receiver extends BroadcastReceiver {
             LocalNotification.add(options.moveDate(), false);
         }
 
-        Builder notification = buildNotification();
+		long triggerTime = options.getDate();
+		long windowMilliseconds = options.getWindowMilliseconds();
+		
+		//Log.w("beatbleeds", "triggerTime: " + triggerTime + " window: " + windowMilliseconds);
+		
+		if (windowMilliseconds > 0) {
+			Calendar cal = Calendar.getInstance();
+			long currentTime = cal.getTimeInMillis();
+			//Log.w("beatbleeds", "currentTime: " + currentTime);
+			if (currentTime - triggerTime > windowMilliseconds) {
+				//Log.w("beatbleeds", "skipping notification - too late");
+				return;
+			}
+		}
 
+        Builder notification = buildNotification();
         showNotification(notification);
     }
 

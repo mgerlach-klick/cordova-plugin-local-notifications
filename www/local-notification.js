@@ -128,6 +128,40 @@ LocalNotification.prototype = {
 
 		return options.id;
 	},
+	
+	/**
+	 * Adds multiple notifications 
+	 *
+	 * @param {Object} options (keys: notifications array, cancelAll bool)
+	 * @return nothing
+	 */
+	addMulti: function (options) {
+		if (options.notifications) {
+			var notificationCount = options.notifications.length;
+			for(var i = 0; i < notificationCount; i++) {
+				var notification = options.notifications[i];
+				notification = this.mergeWithDefaults(notification);
+
+		        if (notification.id) {
+		            notification.id = notification.id.toString();
+		        }
+
+		        if (notification.date === undefined) {
+		            notification.date = new Date();
+		        }
+
+		        if (typeof notification.date == 'object') {
+		            notification.date = Math.round(notification.date.getTime()/1000);
+		        }
+			}
+
+			if (typeof(options.cancelAll) == "undefined" || !options.cancelAll) {
+				options.cancelAll = false;
+			}
+		}
+
+	    cordova.exec(null, null, 'LocalNotification', 'addMulti', [options]);
+	},
 
 	/**
 	 * Entfernt die angegebene Notification.
@@ -153,6 +187,15 @@ LocalNotification.prototype = {
 	 * @param {String} json  A custom (JSON) string
 	 */
 	onadd: function (id, state, json) {},
+	
+	/**
+     * Occurs when addMulti was called.
+     *
+     * @param {String} id    (not set)
+     * @param {String} state Either "foreground" or "background"
+     * @param {String} json  A custom (JSON) string
+     */
+    onaddmulti: function (id, state, json) {},
 
 	/**
 	 * Occurs when the notification is triggered.

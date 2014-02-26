@@ -77,13 +77,32 @@ public class LocalNotification extends CordovaPlugin {
 					JSONObject arguments = args.optJSONObject(0);
 					Options options		 = new Options(context).parse(arguments);
 
-					persist(options.getId(), args);
+					persist(options.getId(), arguments);
 					add(options, true);
 				}
 			});
 
 			return true;
 		}
+		
+		if (action.equalsIgnoreCase("addMulti")) {
+            cordova.getThreadPool().execute( new Runnable() {
+                public void run() {
+					try {
+		                JSONObject arguments = args.optJSONObject(0);
+						JSONArray notifications = arguments.getJSONArray("notifications");
+					
+						addMulti(notifications);
+					}
+					catch (JSONException e) {
+						// NOTE: this is required for compilation due to a constructor throwing JSONException
+				        throw new RuntimeException(e);
+				    }
+                }
+            });
+
+            return true;
+        }
 
 		if (action.equalsIgnoreCase("cancel")) {
 			cordova.getThreadPool().execute( new Runnable() {
@@ -147,6 +166,34 @@ public class LocalNotification extends CordovaPlugin {
 
 		am.set(AlarmManager.RTC_WAKEUP, triggerTime, pi);
 	}
+	
+	/**
+     * Reschedule multiple alarms
+     *
+     * @param notifications
+     *            Array of JSON that can be converted to notification options (see add function)
+     * @param doFireEvent
+     *            If the onadd callback shall be called.
+     */
+    public static void addMulti (JSONArray notifications) {
+		try {
+			// for now, just cancel everything before rescheduling
+	        cancelAll();
+	        unpersistAll();
+
+			for(int i = 0 ; i < notifications.length(); i++) {
+				JSONObject obj		= notifications.getJSONObject(i);
+				Options options     = new Options(context).parse(obj);
+
+	            persist(options.getId(), obj);
+	            add(options, true);
+			}
+		}
+		catch (JSONException e) {
+			// NOTE: this is required for compilation due to a constructor throwing JSONException
+	        throw new RuntimeException(e);
+	    }
+    }
 
 	/**
 	 * Cancel a specific notification that was previously registered.
@@ -209,7 +256,7 @@ public class LocalNotification extends CordovaPlugin {
 	 * @param args
 	 *			  The assumption is that parse has been called already.
 	 */
-	public static void persist (String alarmId, JSONArray args) {
+	public static void persist (String alarmId, JSONObject args) {
 		Editor editor = getSharedPreferences().edit();
 
 		if (alarmId != null) {
