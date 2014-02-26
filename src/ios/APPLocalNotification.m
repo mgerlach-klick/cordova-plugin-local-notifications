@@ -314,14 +314,11 @@ NSMutableArray *jsEventQueue;
 	NSString* json					  = [notification.userInfo objectForKey:@"json"];
 	BOOL autoCancel					  = [[notification.userInfo objectForKey:@"autoCancel"] boolValue];
 	
-	/*
 	NSDate* now						  = [NSDate date];
 	NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
 	NSString* event					  = (fireDateDistance < 0.05) ? @"trigger" : @"click";
 	
 	[self fireEvent:event id:id json:json];
-	 */
-	[self fireEvent:@"trigger" id:id json:json];
 	
 	if (autoCancel && !isActive)
 	{
@@ -390,16 +387,12 @@ NSMutableArray *jsEventQueue;
 	NSString* params = [NSString stringWithFormat:@"\"%@\",\"%@\",\\'%@\\'", id, stateName, json];
 	NSString* js	 = [NSString stringWithFormat:@"setTimeout('plugin.notification.local.on%@(%@)',0)", event, params];
 	
-//		NSLog(@"++++++++++++fireevent!!!");
-//	NSLog(@"candeliver: %hhd", canDeliverNotificationEvents);
-	
 	if(canDeliverNotificationEvents)
 	{
 		[self.commandDelegate evalJs:js];
 	}
 	else
 	{
-//		NSLog(@"adding stuff to jseventqueue");
 		if(jsEventQueue == nil)
 		{
 			jsEventQueue = [[NSMutableArray alloc] init];
@@ -410,4 +403,5 @@ NSMutableArray *jsEventQueue;
 }
 
 @end
+
 
