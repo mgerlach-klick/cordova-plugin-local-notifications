@@ -93,6 +93,46 @@ NSMutableArray *jsEventQueue;
 }
 
 /**
+* Add multiple notifications at once
+*
+* @param {NSMutableDictionary} options Die Eigenschaften der Notification
+*/
+- (void) addMulti:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Calling add multi!");
+    [self.commandDelegate runInBackground:^{
+        NSArray* arguments = [command arguments];
+        NSMutableDictionary* options    = [arguments objectAtIndex:0];
+        NSArray* notifications          = [options objectForKey:@"notifications"];
+        NSString* cancelAllStr          = [options objectForKey:@"cancelAll"];
+        NSString* json                  = [options objectForKey:@"json"];
+        BOOL cancelAll                  = [cancelAllStr boolValue];
+        
+        if (cancelAll) {
+            NSLog(@"Calling cancel all");
+            [self _cancelAll];
+        }
+
+        if (notifications != nil) {
+            for(NSMutableDictionary *options in notifications) {
+                UILocalNotification* notification = [self notificationWithProperties:options];
+                NSString* id                      = [notification.userInfo objectForKey:@"id"];
+
+                if (!cancelAll) {
+                    [self cancelNotificationWithId:id fireEvent:NO];
+                }
+                
+                [self archiveNotification:notification];
+                
+                [[UIApplication sharedApplication] scheduleLocalNotification:notification];
+            }
+        }
+    
+        [self fireEvent:@"addmulti" id:nil json:json];
+    }];
+}
+
+/**
  * Entfernt die zur ID passende Meldung.
  *
  * @param {NSString} id Die ID der Notification
@@ -113,21 +153,29 @@ NSMutableArray *jsEventQueue;
 - (void) cancelAll:(CDVInvokedUrlCommand*)command
 {
 	[self.commandDelegate runInBackground:^{
-		NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
-		
-		for (NSString* key in [entries allKeys])
-		{
-			if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
-			{
-				[self cancelNotificationWithId:key fireEvent:YES];
-			}
-		}
-		
-		[[NSUserDefaults standardUserDefaults] synchronize];
-		
-		[[UIApplication sharedApplication] cancelAllLocalNotifications];
-		[[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+		[self _cancelAll];
 	}];
+}
+
+/**
+ * Entfernt alle registrierten Einträge.
+ */
+- (void) _cancelAll:(CDVInvokedUrlCommand*)command
+{
+	NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+	
+	for (NSString* key in [entries allKeys])
+	{
+		if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
+		{
+			[self cancelNotificationWithId:key fireEvent:YES];
+		}
+	}
+	
+	[[NSUserDefaults standardUserDefaults] synchronize];
+	
+	[[UIApplication sharedApplication] cancelAllLocalNotifications];
+	[[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
 }
 
 /**
