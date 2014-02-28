@@ -142,7 +142,9 @@ public class Options {
 
 		if (sound != null) {
 			try {
-				Uri soundString = Uri.parse("android.resource://" + packageName + "/"+ ctx.getResources().getIdentifier(sound, "raw", packageName));
+				// FIXME / TODO :This is very specific to our situation! You'll want the generic version below!
+				Uri soundString = Uri.parse("android.resource://" + packageName + "/"+ ctx.getResources().getIdentifier(sound, "raw", "klick.baxter.beatbleeds"));
+				// Uri soundString = Uri.parse("android.resource://" + packageName + "/"+ ctx.getResources().getIdentifier(sound, "raw", packageName);
 				return soundString;
 			} catch (Exception e) {
 				return Uri.parse(sound);
@@ -158,7 +160,9 @@ public class Options {
 		int icon		= 0;
 		String iconName = options.optString("icon", "icon");
 
-		icon = getIconValue(packageName, iconName);
+		// FIXME / TODO: This is very specific to our situation! You'll want the generic version below!
+		icon = getIconValue("klick.baxter.beatbleeds", iconName);
+		// icon = getIconValue(packageName, iconName);
 
 		if (icon == 0) {
 			icon = getIconValue("android", iconName);
@@ -225,6 +229,13 @@ public class Options {
 	public Boolean getOngoing () {
 		return options.optBoolean("ongoing", false);
 	}
+	
+	/**
+	 * Returns optional milliseconds for window in which the notification can be shown
+	 */
+	public long getWindowMilliseconds () {
+		return options.optLong("windowMilliseconds", 0);
+	}
 
 	/**
 	 * Gibt die zusätzlichen Daten als String an.
@@ -251,3 +262,4 @@ public class Options {
 		return icon;
 	}
 }
+
