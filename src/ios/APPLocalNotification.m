@@ -46,6 +46,7 @@
 
 // Schlüssel-Präfix für alle archivierten Meldungen
 NSString *const kAPP_LOCALNOTIFICATION = @"APP_LOCALNOTIFICATION";
+float const kMAX_LOCALNOTIFICATION_AGE = 432000; // 5 days
 
 
 @implementation APPLocalNotification
@@ -93,6 +94,39 @@ NSMutableArray *jsEventQueue;
 }
 
 /**
+* Add multiple notifications at once
+*
+* @param {NSMutableDictionary} options Die Eigenschaften der Notification
+*/
+- (void) addMulti:(CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        NSArray* arguments = [command arguments];
+        NSMutableDictionary* options    = [arguments objectAtIndex:0];
+        NSArray* notifications          = [options objectForKey:@"notifications"];
+        NSString* json                  = [options objectForKey:@"json"];
+        int limit                       = [[options objectForKey:@"limit"] intValue];
+        
+        int n = -1;
+        
+        if (limit > 0 && notifications != nil) {
+            n = (limit - [notifications count]);
+        }
+
+        // cancel all outdated and future notifications
+        [self cleanupNotifications:n];
+        
+        if (notifications != nil) {
+            for(NSMutableDictionary *options in notifications) {
+                [self scheduleNotification:options];
+            }
+        }
+        
+        [self fireEvent:@"addmulti" id:nil json:json];
+    }];
+}
+
+/**
  * Entfernt die zur ID passende Meldung.
  *
  * @param {NSString} id Die ID der Notification
@@ -113,20 +147,20 @@ NSMutableArray *jsEventQueue;
 - (void) cancelAll:(CDVInvokedUrlCommand*)command
 {
 	[self.commandDelegate runInBackground:^{
-		NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
-		
-		for (NSString* key in [entries allKeys])
-		{
-			if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
-			{
-				[self cancelNotificationWithId:key fireEvent:YES];
-			}
-		}
-		
-		[[NSUserDefaults standardUserDefaults] synchronize];
-		
-		[[UIApplication sharedApplication] cancelAllLocalNotifications];
-		[[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+        NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+        
+        for (NSString* key in [entries allKeys])
+        {
+            if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
+            {
+                [self cancelNotificationWithId:key fireEvent:YES];
+            }
+        }
+        
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        
+        [[UIApplication sharedApplication] cancelAllLocalNotifications];
+        [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
 	}];
 }
 
@@ -186,11 +220,129 @@ NSMutableArray *jsEventQueue;
 				NSString* id					  = [notification.userInfo objectForKey:@"id"];
 				
 				if (notification.repeatInterval == NSEraCalendarUnit && fireDateDistance > seconds) {
-					[self cancelNotificationWithId:id fireEvent:YES];
+					[self cancelNotificationWithId:id fireEvent:NO];
 				}
 			}
 		}
 	}
+}
+
+/**
+ * Cancels all notifications in the future or older than kMAX_LOCALNOTIFICATION_AGE
+ * Keeps up to {limit} notifications
+ *
+ * @param {int} limit
+ */
+- (void) cleanupNotifications:(int)limit
+{
+	NSDictionary* entries   = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+	NSDate* now             = [NSDate date];
+    float seconds           = kMAX_LOCALNOTIFICATION_AGE;
+    NSMutableArray* keepers = [[NSMutableArray alloc] init];
+	
+	for (NSString* key in [entries allKeys])
+	{
+		if ([key hasPrefix:kAPP_LOCALNOTIFICATION])
+		{
+			NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+			
+			if (data)
+			{
+				UILocalNotification* notification = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+				
+				NSTimeInterval fireDateDistance   = [now timeIntervalSinceDate:notification.fireDate];
+				NSString* id					  = [notification.userInfo objectForKey:@"id"];
+				
+                
+				if (notification.repeatInterval == NSEraCalendarUnit && fireDateDistance < 0) {
+                    // cancel future notifications
+					[self cancelNotificationWithId:id fireEvent:NO];
+				}
+                else if (notification.repeatInterval == NSEraCalendarUnit && fireDateDistance > seconds) {
+                    // cancel old notifications
+					[self cancelNotificationWithId:id fireEvent:NO];
+				}
+                else {
+                    [keepers addObject:notification];
+                }
+			}
+		}
+	}
+    
+    if (limit > -1 && [keepers count] > limit) {
+        // we have too many notifications, so cancel some more
+        int diff = [keepers count] - limit;
+        for (int i = 0; i < diff; i++) {
+            UILocalNotification* notification = [keepers objectAtIndex:i];
+            NSString* id					  = [notification.userInfo objectForKey:@"id"];
+            [self cancelNotificationWithId:id fireEvent:NO];
+        }
+    }
+}
+
+/**
+ * Informs if the app has the permission to show
+ * badges and local notifications.
+ *
+ * @param callback
+ *      The function to be exec as the callback
+ */
+- (void) hasPermission:(CDVInvokedUrlCommand *)command
+{
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* result;
+        BOOL hasPermission = [self hasPermissionToSheduleNotifications];
+
+        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                     messageAsBool:hasPermission];
+
+        [self.commandDelegate sendPluginResult:result
+                                    callbackId:command.callbackId];
+    }];
+}
+
+/**
+ * Ask for permission to show badges.
+ *
+ * @param callback
+ *      The function to be exec as the callback
+ */
+- (void) promptForPermission:(CDVInvokedUrlCommand *)command
+{
+    if (IsAtLeastiOSVersion(@"8.0")) {
+        UIUserNotificationType types;
+        UIUserNotificationSettings *settings;
+
+        types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
+
+        settings = [UIUserNotificationSettings settingsForTypes:types
+                                                     categories:nil];
+
+        [self.commandDelegate runInBackground:^{
+            [[UIApplication sharedApplication]
+             registerUserNotificationSettings:settings];
+        }];
+    }
+}
+
+/**
+ * If the app has the permission to show badges.
+ */
+- (BOOL) hasPermissionToSheduleNotifications
+{
+    if (IsAtLeastiOSVersion(@"8.0")) {
+        UIUserNotificationType types;
+        UIUserNotificationSettings *settings;
+
+        settings = [[UIApplication sharedApplication]
+                    currentUserNotificationSettings];
+
+        types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
+
+        return (settings.types & types);
+    } else {
+        return YES;
+    }
 }
 
 /**
@@ -209,6 +361,39 @@ NSMutableArray *jsEventQueue;
 		
 		[[NSUserDefaults standardUserDefaults] setObject:data forKey:key];
 	}
+}
+
+/**
+ * Schedules the local notification
+ */
+- (void) scheduleNotification:(NSMutableDictionary*)options
+{
+    UILocalNotification* notification = [self notificationWithProperties:options];
+    NSString* id                      = [notification.userInfo objectForKey:@"id"];
+
+    [self cancelNotificationWithId:id fireEvent:NO];
+    
+    [self archiveNotification:notification];
+    
+    [[UIApplication sharedApplication] scheduleLocalNotification:notification];
+}
+
+/**
+ * Returns the total count of local notifications
+ */
+- (int) notificationsCount
+{
+    int count = 0;
+    
+    NSDictionary* entries = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+    
+    for (NSString* key in [entries allKeys]) {
+        if ([key hasPrefix:kAPP_LOCALNOTIFICATION]) {
+            count++;
+        }
+    }
+    
+    return count;
 }
 
 /**
@@ -357,7 +542,7 @@ NSMutableArray *jsEventQueue;
  */
 - (void) onAppTerminate
 {
-	[self cancelAllNotificationsWhichAreOlderThen:432000];
+	[self cancelAllNotificationsWhichAreOlderThen:kMAX_LOCALNOTIFICATION_AGE];
 }
 
 /**
@@ -403,5 +588,3 @@ NSMutableArray *jsEventQueue;
 }
 
 @end
-
-

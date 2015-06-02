@@ -31,11 +31,17 @@ extern NSString *const kAPP_LOCALNOTIFICATION;
 
 // Fügt einen neuen Eintrag hinzu
 - (void) add:(CDVInvokedUrlCommand*)command;
+// Add more than one notification
+- (void) addMulti:(CDVInvokedUrlCommand*)command;
 // Entfernt die zur ID passende Meldung
 - (void) cancel:(CDVInvokedUrlCommand*)command;
 // Entfernt alle registrierten Einträge
 - (void) cancelAll:(CDVInvokedUrlCommand*)command;
 // Notifies the plugin that the app is now ready to accept messages
 - (void) ready:(CDVInvokedUrlCommand*)command;
+// Informs if the app has the permission to show notifications
+- (void) hasPermission:(CDVInvokedUrlCommand *)command;
+// Ask for permission to show notifications
+- (void) promptForPermission:(CDVInvokedUrlCommand *)command;
 
 @end

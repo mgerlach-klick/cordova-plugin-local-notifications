@@ -24,6 +24,7 @@ package de.appplant.cordova.plugin.localnotification;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.Calendar;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -41,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.util.Log;
 
 /**
  * This plugin utilizes the Android AlarmManager in combination with StatusBar
@@ -84,6 +86,25 @@ public class LocalNotification extends CordovaPlugin {
 
 			return true;
 		}
+		
+		if (action.equalsIgnoreCase("addMulti")) {
+            cordova.getThreadPool().execute( new Runnable() {
+                public void run() {
+					try {
+		                JSONObject arguments = args.optJSONObject(0);
+						JSONArray notifications = arguments.getJSONArray("notifications");
+					
+						addMulti(notifications);
+					}
+					catch (JSONException e) {
+						// NOTE: this is required for compilation due to a constructor throwing JSONException
+				        throw new RuntimeException(e);
+				    }
+                }
+            });
+
+            return true;
+        }
 
 		if (action.equalsIgnoreCase("cancel")) {
 			cordova.getThreadPool().execute( new Runnable() {
@@ -147,6 +168,33 @@ public class LocalNotification extends CordovaPlugin {
 
 		am.set(AlarmManager.RTC_WAKEUP, triggerTime, pi);
 	}
+	
+	/**
+     * Reschedule multiple alarms
+     *
+     * @param notifications
+     *            Array of JSON that can be converted to notification options (see add function)
+     */
+    public static void addMulti (JSONArray notifications) {
+		try {
+			cleanupNotifications();
+
+			for(int i = 0 ; i < notifications.length(); i++) {
+				JSONObject obj		= notifications.getJSONObject(i);
+				Options options     = new Options(context).parse(obj);
+				
+				JSONArray array		= new JSONArray();
+				array.put(obj);
+
+	            persist(options.getId(), array);
+	            add(options, true);
+			}
+		}
+		catch (JSONException e) {
+			// NOTE: this is required for compilation due to a constructor throwing JSONException
+	        throw new RuntimeException(e);
+	    }
+    }
 
 	/**
 	 * Cancel a specific notification that was previously registered.
@@ -194,6 +242,7 @@ public class LocalNotification extends CordovaPlugin {
 
 		for (String alarmId : alarmIds) {
 			cancel(alarmId);
+			unpersist(alarmId);
 		}
 
 		nc.cancelAll();
@@ -242,6 +291,42 @@ public class LocalNotification extends CordovaPlugin {
 		editor.clear();
 		editor.commit();
 	}
+	
+	/**
+	 * Cancels future notifications
+	 *
+	 */
+	public static void cleanupNotifications () {
+        // Obtain alarm details form Shared Preferences
+        SharedPreferences alarms = LocalNotification.getSharedPreferences();
+        Set<String> alarmIds     = alarms.getAll().keySet();
+
+		Calendar cal = Calendar.getInstance();
+		long currentTime = cal.getTimeInMillis();
+		
+        /*
+         * For each alarm, parse its alarm options and register is again with
+         * the Alarm Manager
+         */
+        for (String alarmId : alarmIds) {
+			try {
+                JSONArray args  = new JSONArray(alarms.getString(alarmId, ""));
+                Options options = new Options(context).parse(args.getJSONObject(0));
+
+				long triggerTime = options.getDate();
+			
+				// notification is in the future, so cancel it!
+				if (triggerTime > currentTime) {
+					cancel(alarmId);
+					unpersist(alarmId);
+				}
+				
+            } catch (JSONException e) {
+				//Log.w("beatbleeds", "fail: " + e.getMessage());
+			}
+        }
+	}
+	
 
 	/**
 	 * Fires the given event.

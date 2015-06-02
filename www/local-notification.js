@@ -128,6 +128,40 @@ LocalNotification.prototype = {
 
 		return options.id;
 	},
+	
+	/**
+	 * Adds multiple notifications 
+	 *
+	 * @param {Object} options (keys: notifications array, cancelAll bool)
+	 * @return nothing
+	 */
+	addMulti: function (options) {
+		if (options.notifications) {
+			var notificationCount = options.notifications.length;
+			for(var i = 0; i < notificationCount; i++) {
+				var notification = options.notifications[i];
+				notification = this.mergeWithDefaults(notification);
+
+		        if (notification.id) {
+		            notification.id = notification.id.toString();
+		        }
+
+		        if (notification.date === undefined) {
+		            notification.date = new Date();
+		        }
+
+		        if (typeof notification.date == 'object') {
+		            notification.date = Math.round(notification.date.getTime()/1000);
+		        }
+			}
+
+			if (typeof(options.cancelAll) == "undefined" || !options.cancelAll) {
+				options.cancelAll = false;
+			}
+		}
+
+	    cordova.exec(null, null, 'LocalNotification', 'addMulti', [options]);
+	},
 
 	/**
 	 * Entfernt die angegebene Notification.
@@ -144,6 +178,29 @@ LocalNotification.prototype = {
 	cancelAll: function () {
 		cordova.exec(null, null, 'LocalNotification', 'cancelAll', []);
 	},
+	
+	/**
+     * Informs if the app has the permission to show badges.
+     *
+     * @param {Function} callback
+     *      The function to be exec as the callback
+     * @param {Object?} scope
+     *      The callback function's scope
+     */
+    hasPermission: function (callback, scope) {
+        var fn = function (badge) {
+            callback.call(scope || this, badge);
+        };
+
+        cordova.exec(fn, null, 'LocalNotification', 'hasPermission', []);
+    },
+
+    /**
+     * Ask for permission to show badges if not already granted.
+     */
+    promptForPermission: function () {
+        cordova.exec(null, null, 'LocalNotification', 'promptForPermission', []);
+    },
 
 	/**
 	 * Occurs when a notification was added.
@@ -153,6 +210,15 @@ LocalNotification.prototype = {
 	 * @param {String} json  A custom (JSON) string
 	 */
 	onadd: function (id, state, json) {},
+	
+	/**
+     * Occurs when addMulti was called.
+     *
+     * @param {String} id    (not set)
+     * @param {String} state Either "foreground" or "background"
+     * @param {String} json  A custom (JSON) string
+     */
+    onaddmulti: function (id, state, json) {},
 
 	/**
 	 * Occurs when the notification is triggered.
